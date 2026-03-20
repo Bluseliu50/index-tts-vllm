@@ -89,7 +89,6 @@ PROJECT_TTS_CONFIG = load_project_tts_config()
 API_KEY = (
     str(PROJECT_TTS_CONFIG.get("api_key") or "").strip()
     or os.environ.get("INDEX_TTS_API_KEY", "")
-    or "transvideo-sk-9a8a-bf47e304c379"
 )
 api_key_header = APIKeyHeader(name="Authorization", auto_error=False)
 
