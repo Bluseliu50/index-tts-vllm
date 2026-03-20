@@ -20,6 +20,21 @@ from indextts.infer_vllm_v2 import IndexTTS2
 
 tts = None
 
+
+def load_project_tts_config():
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.dirname(os.path.dirname(os.path.dirname(current_dir)))
+    config_path = os.path.join(project_root, "config.json")
+    if not os.path.exists(config_path):
+        return {}
+    try:
+        with open(config_path, "r", encoding="utf-8") as f:
+            config = json.load(f)
+    except Exception:
+        return {}
+    tts_cfg = config.get("tts", {}) if isinstance(config, dict) else {}
+    return tts_cfg if isinstance(tts_cfg, dict) else {}
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global tts
@@ -70,7 +85,12 @@ from fastapi.security.api_key import APIKeyHeader
 import tempfile
 import shutil
 
-API_KEY = os.environ.get("INDEX_TTS_API_KEY", "transvideo-sk-9a8a-bf47e304c379")
+PROJECT_TTS_CONFIG = load_project_tts_config()
+API_KEY = (
+    str(PROJECT_TTS_CONFIG.get("api_key") or "").strip()
+    or os.environ.get("INDEX_TTS_API_KEY", "")
+    or "transvideo-sk-9a8a-bf47e304c379"
+)
 api_key_header = APIKeyHeader(name="Authorization", auto_error=False)
 
 async def get_api_key(api_key_header: str = Security(api_key_header)):
@@ -163,9 +183,14 @@ async def tts_api_url(
 
 
 if __name__ == "__main__":
+    local_host = str(PROJECT_TTS_CONFIG.get("local_host", "0.0.0.0")).strip() or "0.0.0.0"
+    try:
+        local_port = int(PROJECT_TTS_CONFIG.get("local_port", 6006))
+    except (TypeError, ValueError):
+        local_port = 6006
     parser = argparse.ArgumentParser()
-    parser.add_argument("--host", type=str, default="0.0.0.0")
-    parser.add_argument("--port", type=int, default=6006)
+    parser.add_argument("--host", type=str, default=local_host)
+    parser.add_argument("--port", type=int, default=local_port)
     parser.add_argument("--model_dir", type=str, default="checkpoints/IndexTTS-2-vLLM", help="Model checkpoints directory")
     parser.add_argument("--is_fp16", action="store_true", default=False, help="Fp16 infer")
     parser.add_argument("--gpu_memory_utilization", type=float, default=0.25)
