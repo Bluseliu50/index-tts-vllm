@@ -91,11 +91,12 @@ class IndexTTS2:
         )
         indextts_vllm = AsyncLLM.from_engine_args(engine_args)
 
-        self.qwen_emo = QwenEmotion(
-            os.path.join(self.model_dir, self.cfg.qwen_emo_path),
-            gpu_memory_utilization=qwenemo_gpu_memory_utilization,
-        )
-
+        # self.qwen_emo = QwenEmotion(
+        #     os.path.join(self.model_dir, self.cfg.qwen_emo_path),
+        #     gpu_memory_utilization=qwenemo_gpu_memory_utilization,
+        # )
+        self.qwen_emo = None
+        
         self.gpt = UnifiedVoice(indextts_vllm, **self.cfg.gpt)
         self.gpt_path = os.path.join(self.model_dir, self.cfg.gpt_checkpoint)
         load_checkpoint(self.gpt, self.gpt_path)
